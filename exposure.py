@@ -18,7 +18,7 @@ def automatedMSRCR(image):
     sigma_list = np.array(sigma_list, dtype=int)
     return automatedMSRCR2(image, sigma_list)
 
-def preprocess(image, blur_scale=1, gamma=0.8, cutoff=0.65, gain=8):
+def preprocess(image, blur_scale=1.5, gamma=0.8, cutoff=0.65, gain=8):
     modified = image
     height, width, rgb = image.shape
     modified = gamma_correction(modified, gamma)

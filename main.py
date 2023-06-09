@@ -1,25 +1,36 @@
 import cv2
 import numpy as np
 import segmentation
+from scipy import ndimage
 from PIL import Image
 
 
-def correctMask(mask):
-    cv2.imshow("maschera", mask)
-    # Converte la maschera in un array numpy
-    mask_array = np.array(mask)
+def calcola_area_e_filtra(image):
+    
+    # Etichettatura delle regioni connesse
+    labeled_image, num_labels = ndimage.label(image)
+    
+    # Calcola le dimensioni delle regioni connesse
+    sizes = ndimage.sum(image, labeled_image, range(1, num_labels + 1))
+    
+    # Trova l'indice dell'area più grande
+    largest_area_index = np.argmax(sizes)
+    
+    # Crea una maschera per mantenere solo l'area più grande
+    largest_area_mask = np.zeros_like(image)
+    largest_area_mask[labeled_image == largest_area_index + 1] = 255
+    
+    # Mostra l'immagine originale
+    cv2.imshow('Immagine originale', image)
+    
+    # Mostra la maschera dell'area più grande
+    cv2.imshow('Area più grande', largest_area_mask)
+    
+    return largest_area_mask
 
-    # Specifica la coordinata y per la quale si desidera impostare a 0
-    y_threshold = 330
-
-    # Imposta a 0 tutti i valori della maschera sotto la coordinata y_threshold
-    mask_array[y_threshold:, :] = 0
-
-    return mask_array
-
-
-# Read the image
-image = cv2.imread('T_15_20190608_075438.jpg')
+# Path dell'immagine
+#image = cv2.imread('T_15_20190608_075438.jpg')
+image = cv2.imread('')
 
 # Resize the image
 new_size = (300, 400)
@@ -35,7 +46,7 @@ cv2.imshow("img_threshold",img_threshold)
 # Converte l'immagine e la maschera in array numpy
 image_array = np.array(resized_image)
 #mask_array = np.array(img_threshold)
-mask_array = correctMask(img_threshold)
+mask_array = calcola_area_e_filtra(img_threshold)
 
 # Applica la maschera all'immagine
 masked_image_array = np.copy(image_array)

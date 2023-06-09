@@ -6,7 +6,7 @@ MIN_RED = 220
 MIN_GREEN = 180
 MIN_BLUE = 230
 
-def threshold(img: np.array, tolerance: float = 1, 
+def threshold(img: np.array, tolerance: float = 0.97, 
     min_tolerance: float = 0.7, tol_decrease_rate: float = 0.95) -> np.array:
     height, width, rgb = img.shape
     min_region_size = height * width / 200

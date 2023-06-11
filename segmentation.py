@@ -3,6 +3,7 @@ import numpy as np
 from operator import itemgetter
 import exposure
 import norm_cuts as nc
+from scipy import ndimage
 from threshold import threshold, refine
 
 SHOW_NCUT = True
@@ -31,16 +32,40 @@ def segment(img, fix_range=0, cuts=10, compactness=10,
     preprocessed = exposure.preprocess(retinex_img)
     original, kmeans, ncut = nc.nCut(preprocessed, cuts=cuts, 
     compactness=compactness, n_cuts=n_cuts, thresh=n_thresh)
-    cv2.imshow("prova", retinex_img)
     img_threshold = threshold(retinex_img)
     mask_ncut = nc.gaussian_mask(ncut, img_threshold)
     sclera_ncut, mask_ncut = nc.jointRegions(img, ncut, mask_ncut, fix_range, 0)
-    #sclera_ncut, ncut, img_threshold = improve_precision_ncut(original=img, 
-    #img_threshold=img_threshold, seg_img=ncut, mask=mask_ncut, preprocessed=preprocessed, 
-    #ret_img=retinex_img, res_img=sclera_ncut, blur_scale=blur_scale, 
-    #cuts=imp_cuts, thresh=imp_thresh, comp=imp_comp, fix=imp_fix, gamma=gamma)
 
+    img_threshold = np.where(img_threshold == 1, 255, img_threshold)
+    
+    # Converte l'immagine e la maschera in array numpy
+    
+    img_threshold = calcola_area_e_filtra(img_threshold)
+    
     return img_threshold, kmeans, sclera_ncut, ncut
+
+def calcola_area_e_filtra(image, soglia_y=380):
+    # Etichettatura delle regioni connesse
+    labeled_image, num_labels = ndimage.label(image)
+    
+    # Calcola le dimensioni delle regioni connesse
+    sizes = ndimage.sum(image, labeled_image, range(1, num_labels + 1))
+    
+    # Applica il filtro di soglia y per scartare i pixel al di sotto della soglia
+    filtered_image = np.where(image >= soglia_y, image, 0)
+    
+    # Ricalcola le dimensioni delle regioni connesse dopo l'applicazione del filtro di soglia
+    filtered_sizes = ndimage.sum(filtered_image, labeled_image, range(1, num_labels + 1))
+    
+    # Trova l'indice dell'area più grande dopo l'applicazione del filtro di soglia
+    largest_area_index = np.argmax(filtered_sizes)
+    
+    # Crea una maschera per mantenere solo l'area più grande
+    largest_area_mask = np.zeros_like(image)
+    largest_area_mask[labeled_image == largest_area_index + 1] = 255
+    
+    return largest_area_mask
+
 
 def suspect(img):
     l, alpha, beta = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2LAB))

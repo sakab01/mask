@@ -15,13 +15,10 @@ def threshold(img: np.array, tolerance: float = 0.97,
         blue, green, red = cv2.split(img)
         cv2.threshold(red, int(MIN_RED * tolerance), dst=red, 
         maxval=255, type=cv2.THRESH_BINARY)
-        cv2.imshow("rosso",red)
         cv2.threshold(green, int(MIN_GREEN * tolerance), 
         dst=green, maxval=255, type=cv2.THRESH_BINARY)
-        cv2.imshow("verde",green)
         cv2.threshold(blue, int(MIN_BLUE * tolerance), dst=blue, 
         maxval=255, type=cv2.THRESH_BINARY)
-        cv2.imshow("blè",blue)
         mask = red * green * blue
         img_res = refine(mask)
         tolerance *= tol_decrease_rate

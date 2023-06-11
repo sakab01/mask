@@ -1,62 +1,43 @@
 import cv2
 import numpy as np
 import segmentation
-from scipy import ndimage
+import os
 from PIL import Image
-
-
-def calcola_area_e_filtra(image):
-    
-    # Etichettatura delle regioni connesse
-    labeled_image, num_labels = ndimage.label(image)
-    
-    # Calcola le dimensioni delle regioni connesse
-    sizes = ndimage.sum(image, labeled_image, range(1, num_labels + 1))
-    
-    # Trova l'indice dell'area più grande
-    largest_area_index = np.argmax(sizes)
-    
-    # Crea una maschera per mantenere solo l'area più grande
-    largest_area_mask = np.zeros_like(image)
-    largest_area_mask[labeled_image == largest_area_index + 1] = 255
-    
-    # Mostra l'immagine originale
-    cv2.imshow('Immagine originale', image)
-    
-    # Mostra la maschera dell'area più grande
-    cv2.imshow('Area più grande', largest_area_mask)
-    
-    return largest_area_mask
-
-# Path dell'immagine
-#image = cv2.imread('T_15_20190608_075438.jpg')
-image = cv2.imread('')
 
 # Resize the image
 new_size = (300, 400)
 
-resized_image = cv2.resize(image, new_size)
+cartella_destinazione = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere"
 
-img_threshold, kmeans, sclera_ncut, ncut = segmentation.segment(resized_image)
+# Cicla su tutti i file nella cartella
+for file in os.listdir(r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\Italiano congiuntive\Dataset congiuntive gruppo anemia  organizzato 28 mar 2020\Trasfusionale congiuntive"):
+    # Verifica se il file è un'immagine
+    if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
+        
+        # Crea il percorso completo del file
+        percorso_file = os.path.join(r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\Italiano congiuntive\Dataset congiuntive gruppo anemia  organizzato 28 mar 2020\Trasfusionale congiuntive", file)
+        
+        # Apri l'immagine utilizzando cv2
+        image = cv2.imread(percorso_file)
 
-cv2.imshow("originale",resized_image)
-img_threshold = np.where(img_threshold == 1, 255, img_threshold)
-cv2.imshow("img_threshold",img_threshold)
+        resized_image = cv2.resize(image, new_size)
 
-# Converte l'immagine e la maschera in array numpy
-image_array = np.array(resized_image)
-#mask_array = np.array(img_threshold)
-mask_array = calcola_area_e_filtra(img_threshold)
+        img_threshold, kmeans, sclera_ncut, ncut = segmentation.segment(resized_image)
 
-# Applica la maschera all'immagine
-masked_image_array = np.copy(image_array)
-masked_image_array[mask_array == 0] = 0  # Imposta i pixel corrispondenti alla maschera a 0
+        # Applica la maschera all'immagine
+        masked_image_array = np.copy(img_threshold)
+        masked_image_array[img_threshold == 0] = 0  # Imposta i pixel corrispondenti alla maschera a 0
 
-# Crea un'immagine PIL dalla matrice dell'immagine mascherata
-masked_image = Image.fromarray(masked_image_array)
+        # Crea un'immagine PIL dalla matrice dell'immagine mascherata
+        masked_image = Image.fromarray(masked_image_array)
+        
+        nome_file = os.path.basename(percorso_file)
 
-# Mostra l'immagine mascherata
-masked_image.show()
+        # Salva l'immagine nella cartella di destinazione
+        nome_file = nome_file+"_maschera"
+        percorso_file = str(cartella_destinazione) +"/"+ str(nome_file) +".jpg"
+        masked_image.save(percorso_file)
+        
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+
+

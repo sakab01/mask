@@ -1,4 +1,5 @@
 import cv2
+from matplotlib import pyplot as plt
 import numpy as np
 from operator import itemgetter
 import exposure
@@ -30,29 +31,62 @@ def segment(img, fix_range=0, cuts=10, compactness=10,
  
     retinex_img = exposure.automatedMSRCR(img)
     preprocessed = exposure.preprocess(retinex_img)
+
+
     original, kmeans, ncut = nc.nCut(preprocessed, cuts=cuts, 
     compactness=compactness, n_cuts=n_cuts, thresh=n_thresh)
-    img_threshold = threshold(retinex_img)
-    mask_ncut = nc.gaussian_mask(ncut, img_threshold)
-    sclera_ncut, mask_ncut = nc.jointRegions(img, ncut, mask_ncut, fix_range, 0)
 
-    img_threshold = np.where(img_threshold == 1, 255, img_threshold)
+    #ncut = calcola_area_e_filtra(ncut)
+
+    img_threshold = threshold(retinex_img)
+
+    test = calcola_area_e_filtra(ncut)
+
+    mask_ncut = nc.gaussian_mask(test, img_threshold)
+
+    sclera_ncut, mask_ncut = nc.jointRegions(img, ncut, mask_ncut, fix_range, 0)
     
-    # Converte l'immagine e la maschera in array numpy
+    sclera_ncut, ncut, img_threshold = improve_precision_ncut(original=img,
+    img_threshold=img_threshold,
+    seg_img=ncut,
+    mask=mask_ncut,
+    preprocessed=preprocessed,
+    ret_img=retinex_img,
+    res_img=sclera_ncut,
+    blur_scale=blur_scale,
+    cuts=imp_cuts, thresh=imp_thresh, comp=imp_comp,
+    fix=imp_fix, gamma=gamma)
+
+
+    # converti in scala di grigi la foto
+    sclera_ncut = cv2.cvtColor(sclera_ncut, cv2.COLOR_BGR2GRAY)
+
+    #converti in bianco i valori più grandi di 0
+    sclera_ncut = np.where(sclera_ncut > 0, 255, sclera_ncut)
     
-    img_threshold = calcola_area_e_filtra(img_threshold)
     
-    return img_threshold, kmeans, sclera_ncut, ncut
+    return sclera_ncut, img_threshold, kmeans, ncut
 
 def calcola_area_e_filtra(image, soglia_y=380):
+
+    image_backup = image.copy()
+
+    #converti in scala di grigi
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # converti in nero tutti i valori più piccoli di 200
+    image = np.where(image < 200, 0, image)
+    
+    # converti in bianco tutti i valori più grandi di 200
+    image = np.where(image >= 200, 255, image)
+
     # Etichettatura delle regioni connesse
     labeled_image, num_labels = ndimage.label(image)
     
-    # Calcola le dimensioni delle regioni connesse
-    sizes = ndimage.sum(image, labeled_image, range(1, num_labels + 1))
-    
     # Applica il filtro di soglia y per scartare i pixel al di sotto della soglia
-    filtered_image = np.where(image >= soglia_y, image, 0)
+    filtered_image = np.copy(image)
+    filtered_image[filtered_image > soglia_y] = 0
+
     
     # Ricalcola le dimensioni delle regioni connesse dopo l'applicazione del filtro di soglia
     filtered_sizes = ndimage.sum(filtered_image, labeled_image, range(1, num_labels + 1))
@@ -63,8 +97,11 @@ def calcola_area_e_filtra(image, soglia_y=380):
     # Crea una maschera per mantenere solo l'area più grande
     largest_area_mask = np.zeros_like(image)
     largest_area_mask[labeled_image == largest_area_index + 1] = 255
-    
-    return largest_area_mask
+
+
+    image_output = cv2.bitwise_and(image_backup, image_backup, mask=largest_area_mask)
+
+    return image_output
 
 
 def suspect(img):
@@ -88,8 +125,6 @@ def improve_precision_ncut(original, img_threshold, seg_img,
     if blur_scale != 1 or gamma != 0.8:
         preprocessed = exposure.preprocess(ret_img, blur_scale=blur_scale, gamma=gamma)
     if SHOW_NCUT:
-        cv2.imshow('preprocessed', preprocessed)
-        cv2.imshow('first_segment', seg_img)
         i = 0
         history = []
         while i < max_iter:

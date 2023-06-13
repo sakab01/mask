@@ -85,23 +85,26 @@ def calcola_area_e_filtra(image, soglia_y=380):
     
     # Applica il filtro di soglia y per scartare i pixel al di sotto della soglia
     filtered_image = np.copy(image)
+
     filtered_image[filtered_image > soglia_y] = 0
 
-    
     # Ricalcola le dimensioni delle regioni connesse dopo l'applicazione del filtro di soglia
     filtered_sizes = ndimage.sum(filtered_image, labeled_image, range(1, num_labels + 1))
     
-    # Trova l'indice dell'area più grande dopo l'applicazione del filtro di soglia
-    largest_area_index = np.argmax(filtered_sizes)
-    
-    # Crea una maschera per mantenere solo l'area più grande
-    largest_area_mask = np.zeros_like(image)
-    largest_area_mask[labeled_image == largest_area_index + 1] = 255
+    if len(filtered_sizes) > 0:
+        largest_area_index = np.argmax(filtered_sizes)
+        
+        # Crea una maschera per mantenere solo l'area più grande
+        largest_area_mask = np.zeros_like(image)
+        largest_area_mask[labeled_image == largest_area_index + 1] = 255
 
 
-    image_output = cv2.bitwise_and(image_backup, image_backup, mask=largest_area_mask)
+        image_output = cv2.bitwise_and(image_backup, image_backup, mask=largest_area_mask)
 
-    return image_output
+        return image_output
+    else:
+        return filtered_image
+
 
 
 def suspect(img):

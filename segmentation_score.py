@@ -22,8 +22,8 @@ veri_negativi=0
 falsi_positivi=0
 falsi_negativi=0
 i=0
-cartella1 = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere"
-cartella2 = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere_tesiInglese"
+cartella1 = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\original size mask"
+cartella2 = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere_tesiInglese OS"
 
 # Ottieni la lista dei file nelle due cartelle
 file_cartella1 = os.listdir(cartella1)

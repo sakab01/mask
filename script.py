@@ -1,12 +1,12 @@
 import os
 import cv2
 # Resize the image
-new_size = (300, 400)
+new_size = (1200, 1600)
 
 # Definisci il percorso della directory principale
 directory_principale = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\Italiano congiuntive\Dataset congiuntive italiano segmentato"
 
-cartella_destinazione = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere_tesiInglese"
+cartella_destinazione = r"C:\Users\Sabino\Desktop\sistemi multimediali\database_sclere\maschere_tesiInglese OS"
 
 # Cicla attraverso ogni elemento nella directory principale
 for elemento in os.listdir(directory_principale):

@@ -144,15 +144,11 @@ def refine_mask(mask, intensity=1):
         block_size = r * 0.032 * intensity
         if block_size < 1: block_size = 1
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        # cv2.imshow("mask", mascheraBW)
         mask = closing(mask, square(int(block_size * 1.5)))
-        # cv2.imshow("after closing", mascheraBW)
         mask = Image.fromarray(mask).filter(ImageFilter.ModeFilter(int(block_size)))
         mask = np.array(mask)
         mask = dilation(mask, square(int(block_size * 0.45)))
-        # cv2.imshow("after dilate", mascheraBW)
         mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-        # cv2.imshow("after conversion", mascheraBW)
     return mask
 
 def gaussian_mask(seg_img, bin_img):
